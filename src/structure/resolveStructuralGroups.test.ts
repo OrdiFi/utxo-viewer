@@ -20,6 +20,7 @@ function member(
   return {
     id,
     offset,
+    postage: 100,
 
     group:
       options.level && options.direction
@@ -195,4 +196,31 @@ describe('resolveStructuralGroups', () => {
       ]),
     ).toThrow('duplicate structural group B1')
   })
+})
+
+it('computes structural group physical range from first offset to last end', () => {
+  const result = resolveStructuralGroups([
+    member('root', 0, {
+      level: 'A',
+      number: 1,
+      direction: '+',
+      childLevel: 'B',
+    }),
+
+    member('b1-anchor', 100, {
+      level: 'B',
+      number: 1,
+      direction: '+',
+      relationDirection: '+',
+      relationOffset: 0,
+    }),
+
+    member('b1-content', 200),
+  ])
+
+  const child = result[0].children[0]
+
+  expect(child.offset).toBe(100)
+  expect(child.end).toBe(300)
+  expect(child.postage).toBe(200)
 })

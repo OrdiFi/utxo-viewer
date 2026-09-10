@@ -13,6 +13,7 @@ export type PhysicalMember = {
   id: InscriptionId
 
   offset: number
+  postage: number
 
   group: StructuralGroupDirective | null
   relation: StructuralCompositionRelation | null
@@ -119,6 +120,22 @@ export function resolveStructuralGroups(
             ? [content.id, candidate.id]
             : [candidate.id, content.id]
 
+        const physicalMembers =
+          candidate.relation.direction === '-'
+            ? [content, candidate]
+            : [candidate, content]
+
+        const groupOffset =
+          physicalMembers[0].offset
+
+        const last =
+          physicalMembers[
+            physicalMembers.length - 1
+          ]
+
+        const groupEnd =
+          last.offset + last.postage
+
         children.push({
           id: {
             level: directive.childLevel!,
@@ -132,6 +149,10 @@ export function resolveStructuralGroups(
 
           parent: parentId,
 
+          offset: groupOffset,
+          end: groupEnd,
+          postage: groupEnd - groupOffset,
+
           members,
 
           children: [],
@@ -143,6 +164,9 @@ export function resolveStructuralGroups(
           a.id.number - b.id.number,
       )
 
+      const parentEnd =
+        parent.offset + parent.postage
+
       return {
         id: parentId,
 
@@ -151,6 +175,10 @@ export function resolveStructuralGroups(
         rootId: parent.id,
 
         parent: null,
+
+        offset: parent.offset,
+        end: parentEnd,
+        postage: parent.postage,
 
         members: [parent.id],
 

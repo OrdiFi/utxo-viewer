@@ -62,6 +62,19 @@ export type StructuralGroup = {
 
   parent: StructuralInstanceId | null
 
+  /*
+   * Physical range occupied by this structural group.
+   *
+   * [offset, end)
+   * postage = end - offset
+   */
+  offset: number
+  end: number
+  postage: number
+
+  /*
+   * IDs in physical UTXO order.
+   */
   members: InscriptionId[]
 
   children: StructuralGroup[]
