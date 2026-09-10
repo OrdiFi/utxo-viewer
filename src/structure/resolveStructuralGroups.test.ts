@@ -15,12 +15,13 @@ function member(
     childLevel?: string | null
     relationDirection?: '+' | '-'
     relationOffset?: number
+    postage?: number
   } = {},
 ): PhysicalMember {
   return {
     id,
     offset,
-    postage: 100,
+    postage: options.postage ?? 100,
 
     group:
       options.level && options.direction
@@ -223,4 +224,87 @@ it('computes structural group physical range from first offset to last end', () 
   expect(child.offset).toBe(100)
   expect(child.end).toBe(300)
   expect(child.postage).toBe(200)
+})
+
+it('resolves nested structural subtrees recursively', () => {
+  const result = resolveStructuralGroups([
+    member('ROOT', 0, {
+      level: 'A',
+      number: 1,
+      direction: '+',
+      childLevel: 'B',
+      postage: 546,
+    }),
+
+    member('LEAF-1', 546, {
+      postage: 600,
+    }),
+
+    member('NODE-1', 1146, {
+      level: 'B',
+      number: 1,
+      direction: '-',
+      childLevel: 'C',
+      relationDirection: '-',
+      relationOffset: 0,
+      postage: 546,
+    }),
+
+    member('LEAF-2', 1692, {
+      postage: 600,
+    }),
+
+    member('NODE-2', 2292, {
+      level: 'B',
+      number: 2,
+      direction: '-',
+      childLevel: 'C',
+      relationDirection: '-',
+      relationOffset: 0,
+      postage: 546,
+    }),
+  ])
+
+  expect(result).toHaveLength(1)
+
+  const root = result[0]
+
+  expect(root.id).toEqual({
+    level: 'A',
+    number: 1,
+  })
+
+  expect(root.children).toHaveLength(2)
+
+  const first = root.children[0]
+  const second = root.children[1]
+
+  expect(first.rootId).toBe('NODE-1')
+  expect(first.members).toEqual([
+    'LEAF-1',
+    'NODE-1',
+  ])
+  expect(first.offset).toBe(546)
+  expect(first.end).toBe(1692)
+  expect(first.postage).toBe(1146)
+
+  expect(first.children).toHaveLength(1)
+  expect(first.children[0].rootId).toBe('LEAF-1')
+  expect(first.children[0].id).toEqual({
+    level: 'C',
+    number: 1,
+  })
+
+  expect(second.rootId).toBe('NODE-2')
+  expect(second.members).toEqual([
+    'LEAF-2',
+    'NODE-2',
+  ])
+
+  expect(second.children).toHaveLength(1)
+  expect(second.children[0].rootId).toBe('LEAF-2')
+  expect(second.children[0].id).toEqual({
+    level: 'C',
+    number: 1,
+  })
 })
