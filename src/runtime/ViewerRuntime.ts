@@ -2,13 +2,13 @@ import type { ReactNode } from 'react'
 
 import type { ViewerProvider } from '../provider/ViewerProvider'
 import type {
-  StructuredSpec,
+  StructuralSpec,
   ViewerNode,
 } from '../structure/types'
 
 export type ViewerRuntimeContext = {
   root: ViewerNode
-  spec: StructuredSpec | null
+  spec: StructuralSpec | null
   provider: ViewerProvider
   interactive: boolean
 }

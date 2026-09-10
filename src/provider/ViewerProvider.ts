@@ -1,8 +1,8 @@
 import type {
+  ContentSpec,
   InscriptionId,
   Outpoint,
   ResolvedViewerInput,
-  StructuredSpec,
   ViewerOutput,
 } from '../structure/types'
 
@@ -40,9 +40,9 @@ export interface ViewerProvider {
 
   getContent(id: InscriptionId): Promise<ViewerContent>
 
-  getStructuredSpec(
+  getContentSpec(
     id: InscriptionId,
-  ): Promise<StructuredSpec | null>
+  ): Promise<ContentSpec | null>
 
   getContentInfo?(
     id: InscriptionId,

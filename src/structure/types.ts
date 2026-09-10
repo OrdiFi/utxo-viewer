@@ -14,20 +14,43 @@ export type Satpoint = {
   offset: number
 }
 
-export type StructuredRelation = {
-  parentLevel: string
-  childLevel: string
-  direction: '+' | '-'
-  maxChildren: number
+/*
+ * Fundamental structural primitives.
+ */
+
+export type StructuralDirection = '+' | '-'
+
+export type StructuralLevel = string
+
+export type StructuralNumber = number
+
+/*
+ * Canonical structural grammar.
+ */
+
+export type StructuralRelation = {
+  parentLevel: StructuralLevel
+  childLevel: StructuralLevel
+  direction: StructuralDirection
+  maxChildren: StructuralNumber
 }
 
-export type StructuredSpec = {
-  structure: {
-    version: number
-    rootLevel: string
-    relations: StructuredRelation[]
-  }
+export type StructuralSpec = {
+  version: number
+  rootLevel: StructuralLevel
+  relations: StructuralRelation[]
+}
 
+/*
+ * Raw inscription/content specification.
+ *
+ * `structure` is interpreted by the neutral structural layer.
+ * Other fields remain available without becoming part of the
+ * canonical structural grammar.
+ */
+
+export type ContentSpec = {
+  structure?: unknown
   [key: string]: unknown
 }
 
@@ -53,15 +76,22 @@ export type ResolvedViewerInput = {
   satpoint?: Satpoint | null
 }
 
+/*
+ * Resolved logical structure instance.
+ */
+
 export type ViewerNode = {
   id: InscriptionId
-  level?: string | null
+
+  level?: StructuralLevel | null
+  number?: StructuralNumber | null
+  direction?: StructuralDirection | null
 
   offset: number
   postage: number
 
   specId?: InscriptionId | null
-  spec?: StructuredSpec | null
+  spec?: StructuralSpec | null
 
   parentId?: InscriptionId | null
   children: ViewerNode[]
