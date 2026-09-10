@@ -42,6 +42,32 @@ export type StructuralSpec = {
 }
 
 /*
+ * Concrete structural instance.
+ *
+ * A structural group is identified by level + number.
+ * Direction describes its structural space relative to its parent.
+ */
+
+export type StructuralInstanceId = {
+  level: StructuralLevel
+  number: StructuralNumber
+}
+
+export type StructuralGroup = {
+  id: StructuralInstanceId
+
+  direction: StructuralDirection | null
+
+  rootId: InscriptionId
+
+  parent: StructuralInstanceId | null
+
+  members: InscriptionId[]
+
+  children: StructuralGroup[]
+}
+
+/*
  * Raw inscription/content specification.
  *
  * `structure` is interpreted by the neutral structural layer.
