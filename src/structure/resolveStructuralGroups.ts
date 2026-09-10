@@ -136,6 +136,13 @@ function numberForAnchor(
     : 1
 }
 
+/*
+ * Interpret structural relationships from observed physical data.
+ *
+ * This resolver does not validate BCE transaction or composition
+ * validity. Contiguity, dust, postage policy and structural validity
+ * belong to BCE Verify.
+ */
 export function resolveStructuralGroups(
   physicalMembers: PhysicalMember[],
 ): StructuralGroup[] {
