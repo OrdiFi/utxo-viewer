@@ -27,7 +27,7 @@ function member(
         ? {
             level: options.level,
             number: options.number ?? null,
-            direction: options.direction,
+            childDirection: options.direction,
             childLevel:
               options.childLevel ?? null,
           }
@@ -124,7 +124,7 @@ describe('resolveStructuralGroups', () => {
       'b1-anchor',
     ])
 
-    expect(result[0].children[0].direction).toBe('-')
+    expect(result[0].children[0].relationFromParent?.direction).toBe('-')
   })
 
   it('sorts children by structural number rather than physical order', () => {

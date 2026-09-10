@@ -45,7 +45,8 @@ export type StructuralSpec = {
  * Concrete structural instance.
  *
  * A structural group is identified by level + number.
- * Direction describes its structural space relative to its parent.
+ * Parent-child direction is authored by the parent and preserved
+ * here only as a resolved relation.
  */
 
 export type StructuralInstanceId = {
@@ -56,7 +57,9 @@ export type StructuralInstanceId = {
 export type StructuralGroup = {
   id: StructuralInstanceId
 
-  direction: StructuralDirection | null
+  relationFromParent: {
+    direction: StructuralDirection
+  } | null
 
   rootId: InscriptionId
 

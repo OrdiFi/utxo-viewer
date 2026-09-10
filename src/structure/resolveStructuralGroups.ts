@@ -65,7 +65,7 @@ export function resolveStructuralGroups(
           ?.index ?? ordered.length
 
       const candidateRange =
-        directive.direction === '+'
+        directive.childDirection === '+'
           ? ordered.slice(
               parentIndex + 1,
               nextParentIndex,
@@ -142,8 +142,9 @@ export function resolveStructuralGroups(
             number: childNumber,
           },
 
-          direction:
-            candidate.relation.direction,
+          relationFromParent: {
+            direction: directive.childDirection,
+          },
 
           rootId: candidate.id,
 
@@ -170,7 +171,7 @@ export function resolveStructuralGroups(
       return {
         id: parentId,
 
-        direction: directive.direction,
+        relationFromParent: null,
 
         rootId: parent.id,
 

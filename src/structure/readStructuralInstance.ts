@@ -8,7 +8,7 @@ import type {
 export type StructuralGroupDirective = {
   level: StructuralLevel
   number: StructuralNumber | null
-  direction: StructuralDirection
+  childDirection: StructuralDirection
   childLevel: StructuralLevel | null
 }
 
@@ -60,7 +60,7 @@ export function readStructuralGroupDirective(
   const group = groups as Record<string, unknown>
 
   const level = readLevel(group.level)
-  const direction = readDirection(group.side)
+  const childDirection = readDirection(group.side)
   const childLevel = readLevel(group.childrenLevel)
 
   const rawNumber = Number(group.group)
@@ -70,14 +70,14 @@ export function readStructuralGroupDirective(
       ? rawNumber
       : null
 
-  if (!level || !direction) {
+  if (!level || !childDirection) {
     return null
   }
 
   return {
     level,
     number,
-    direction,
+    childDirection,
     childLevel,
   }
 }
