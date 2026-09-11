@@ -64,6 +64,12 @@ function App() {
   const [revision, setRevision] =
     useState(0)
 
+  const [mode, setMode] =
+    useState<'grid' | 'single'>('grid')
+
+  const [activeIndex, setActiveIndex] =
+    useState(0)
+
   const [infoOpen, setInfoOpen] =
     useState(true)
 
@@ -103,6 +109,8 @@ function App() {
     }
 
     setState(null)
+    setMode('grid')
+    setActiveIndex(0)
     setInput(next)
   }
 
@@ -206,12 +214,126 @@ function App() {
       </header>
 
       <section className="viewer-workspace">
-        <div className="viewer-stage">
+        <div className="viewer-stage-wrap">
+          <div className="viewer-modebar">
+            <div className="viewer-mode-buttons">
+              <button
+                type="button"
+                className={
+                  mode === 'grid'
+                    ? 'viewer-mode-button is-active'
+                    : 'viewer-mode-button'
+                }
+                onClick={() =>
+                  setMode('grid')
+                }
+              >
+                Grid
+              </button>
+
+              <button
+                type="button"
+                className={
+                  mode === 'single'
+                    ? 'viewer-mode-button is-active'
+                    : 'viewer-mode-button'
+                }
+                disabled={
+                  !state ||
+                  state.output.inscriptions.length === 0
+                }
+                onClick={() => {
+                  setMode('single')
+
+                  if (
+                    activeIndex >=
+                    (state?.output.inscriptions.length ?? 0)
+                  ) {
+                    setActiveIndex(0)
+                  }
+                }}
+              >
+                Single
+              </button>
+            </div>
+
+            <div className="viewer-navigation">
+              <button
+                type="button"
+                className="viewer-nav-button"
+                disabled={
+                  mode !== 'single' ||
+                  activeIndex <= 0
+                }
+                onClick={() =>
+                  setActiveIndex(
+                    (value) =>
+                      Math.max(0, value - 1),
+                  )
+                }
+              >
+                ← Prev
+              </button>
+
+              <div className="viewer-position">
+                {state &&
+                state.output.inscriptions.length > 0 ? (
+                  mode === 'single' ? (
+                    <>
+                      {activeIndex + 1}
+                      {' / '}
+                      {state.output.inscriptions.length}
+                      {' · offset '}
+                      {state.output.inscriptions[
+                        activeIndex
+                      ]?.offset ?? '—'}
+                    </>
+                  ) : (
+                    <>
+                      {state.output.inscriptions.length}
+                      {' item'}
+                      {state.output.inscriptions.length === 1
+                        ? ''
+                        : 's'}
+                    </>
+                  )
+                ) : (
+                  '—'
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="viewer-nav-button"
+                disabled={
+                  mode !== 'single' ||
+                  !state ||
+                  activeIndex >=
+                    state.output.inscriptions.length - 1
+                }
+                onClick={() =>
+                  setActiveIndex(
+                    (value) =>
+                      Math.min(
+                        (state?.output.inscriptions.length ?? 1) - 1,
+                        value + 1,
+                      ),
+                  )
+                }
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+
+          <div className="viewer-stage">
           {input ? (
             <ViewerRoot
               key={`${input}:${revision}`}
               provider={provider}
               input={input}
+              mode={mode}
+              activeIndex={activeIndex}
               sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
               onStateChange={setState}
             />
@@ -222,6 +344,7 @@ function App() {
               satpoint.
             </div>
           )}
+          </div>
         </div>
 
         {infoOpen ? (

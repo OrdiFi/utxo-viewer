@@ -27,9 +27,20 @@ import {
   type ViewerState,
 } from './loadViewerState'
 
+import {
+  selectPhysicalEntries,
+} from './viewerMode'
+
+import type {
+  ViewerMode,
+} from './viewerMode'
+
 export type ViewerRootProps = {
   provider: ViewerProvider
   input: string
+
+  mode?: ViewerMode
+  activeIndex?: number
 
   className?: string
   sandbox?: string
@@ -51,6 +62,30 @@ type ContentState =
       status: 'error'
       error: string
     }
+
+function makePhysicalViewerNode(
+  entry: ViewerState['output']['inscriptions'][number],
+  state: ViewerState,
+): ViewerNode {
+  return {
+    id: entry.id,
+
+    offset: entry.offset,
+    postage: entry.postage,
+
+    level: null,
+    number: null,
+
+    relationFromParent: null,
+
+    contentSpec:
+      state.specs.get(entry.id) ?? null,
+
+    members: [],
+    sequence: [entry.id],
+    children: [],
+  }
+}
 
 function ContentNode({
   provider,
@@ -137,6 +172,8 @@ function ContentNode({
 export function ViewerRoot({
   provider,
   input,
+  mode = 'structure',
+  activeIndex = 0,
   className,
   sandbox,
   onStateChange,
@@ -238,6 +275,72 @@ export function ViewerRoot({
 
   if (!state) {
     return null
+  }
+
+  if (mode === 'single') {
+    const [entry] =
+      selectPhysicalEntries(
+        state,
+        mode,
+        activeIndex,
+      )
+
+    if (!entry) {
+      return null
+    }
+
+    return (
+      <div
+        className={className}
+        data-utxo-viewer=""
+        data-viewer-mode="single"
+      >
+        <div
+          data-viewer-content={entry.id}
+          data-viewer-offset={entry.offset}
+        >
+          {renderContent(
+            entry.id,
+            makePhysicalViewerNode(
+              entry,
+              state,
+            ),
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  if (mode === 'grid') {
+    return (
+      <div
+        className={className}
+        data-utxo-viewer=""
+        data-viewer-mode="grid"
+      >
+        {selectPhysicalEntries(
+          state,
+          mode,
+          activeIndex,
+        ).map(
+          (entry) => (
+            <div
+              key={entry.id}
+              data-viewer-grid-item={entry.id}
+              data-viewer-offset={entry.offset}
+            >
+              {renderContent(
+                entry.id,
+                makePhysicalViewerNode(
+                  entry,
+                  state,
+                ),
+              )}
+            </div>
+          ),
+        )}
+      </div>
+    )
   }
 
   return (
