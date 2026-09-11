@@ -133,16 +133,42 @@ export type ResolvedViewerInput = {
 export type ViewerNode = {
   id: InscriptionId
 
-  level?: StructuralLevel | null
-  number?: StructuralNumber | null
-  direction?: StructuralDirection | null
-
+  /*
+   * Physical range occupied by this rendered node.
+   */
   offset: number
   postage: number
 
-  specId?: InscriptionId | null
-  spec?: StructuralSpec | null
+  /*
+   * Structural identity of the resolved node.
+   */
+  level: StructuralLevel | null
+  number: StructuralNumber | null
 
-  parentId?: InscriptionId | null
+  /*
+   * Relation is authored by the parent.
+   * It is preserved here only as the resolved
+   * relation from the parent to this node.
+   */
+  relationFromParent: {
+    direction: StructuralDirection
+  } | null
+
+  /*
+   * Raw content specification belonging to this
+   * structural anchor.
+   */
+  contentSpec: ContentSpec | null
+
+  /*
+   * Physical inscriptions belonging directly to
+   * this anchor, excluding the anchor itself and
+   * all members owned by structural child subtrees.
+   */
+  members: InscriptionId[]
+
+  /*
+   * Direct structural children only.
+   */
   children: ViewerNode[]
 }
