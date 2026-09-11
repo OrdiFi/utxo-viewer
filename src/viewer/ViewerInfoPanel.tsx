@@ -231,7 +231,11 @@ export function ViewerInfoPanel({
                 (entry) => (
                   <div
                     key={entry.id}
-                    className="viewer-offset-entry"
+                    className={
+                      entry.id === selectedId
+                        ? 'viewer-offset-entry is-active'
+                        : 'viewer-offset-entry'
+                    }
                   >
                     <div className="viewer-offset-head">
                       <strong>
