@@ -32,7 +32,12 @@ export type StructuralRelation = {
   parentLevel: StructuralLevel
   childLevel: StructuralLevel
   direction: StructuralDirection
-  maxChildren: StructuralNumber
+
+  /*
+   * Optional capacity limit.
+   * Missing means no declared upper bound.
+   */
+  maxChildren?: StructuralNumber
 }
 
 export type StructuralSpec = {
@@ -44,26 +49,38 @@ export type StructuralSpec = {
 /*
  * Concrete structural instance.
  *
- * A structural group is identified by level + number.
- * Parent-child direction is authored by the parent and preserved
- * here only as a resolved relation.
+ * Stable node identity is the inscription id.
+ * LEVEL / NUMBER / DIRECTION describe local structural
+ * relations and must not be interpreted as global tree depth
+ * or node identity.
  */
 
-export type StructuralInstanceId = {
-  level: StructuralLevel
-  number: StructuralNumber
+export type StructuralRelationInstance = {
+  parentLevel: StructuralLevel | null
+  childLevel: StructuralLevel | null
+  direction: StructuralDirection
+  number: StructuralNumber | null
 }
 
 export type StructuralGroup = {
-  id: StructuralInstanceId
-
-  relationFromParent: {
-    direction: StructuralDirection
-  } | null
-
+  /*
+   * Stable node identity is the inscription itself.
+   *
+   * LEVEL / NUMBER / DIRECTION describe local structural
+   * relations and are not global node identifiers.
+   */
   rootId: InscriptionId
 
-  parent: StructuralInstanceId | null
+  parentId: InscriptionId | null
+
+  relationFromParent:
+    StructuralRelationInstance | null
+
+  relationToChildren: {
+    parentLevel: StructuralLevel | null
+    childLevel: StructuralLevel | null
+    direction: StructuralDirection
+  } | null
 
   /*
    * Physical range occupied by this structural group.
@@ -140,7 +157,10 @@ export type ViewerNode = {
   postage: number
 
   /*
-   * Structural identity of the resolved node.
+   * Local structural role of the resolved node.
+   *
+   * These values describe the incoming relation and
+   * are not node identity. Stable identity is `id`.
    */
   level: StructuralLevel | null
   number: StructuralNumber | null
