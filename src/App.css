@@ -10,8 +10,8 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #090909;
-  color: #f5f5f5;
+  background: var(--viewer-bg);
+  color: var(--viewer-text);
 }
 
 button,
@@ -36,7 +36,7 @@ input {
 
 .app-kicker {
   margin-bottom: 5px;
-  color: #8f8f8f;
+  color: var(--viewer-text-muted);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.16em;
@@ -51,14 +51,14 @@ input {
 
 .app-header p {
   margin: 9px 0 0;
-  color: #8f8f8f;
+  color: var(--viewer-text-muted);
   font-size: 14px;
 }
 
 .provider-status {
   max-width: 360px;
   overflow: hidden;
-  color: #777;
+  color: var(--viewer-text-dim);
   font-family: monospace;
   font-size: 12px;
   text-overflow: ellipsis;
@@ -75,15 +75,15 @@ input {
   min-width: 0;
   flex: 1;
   padding: 12px 14px;
-  border: 1px solid #292929;
+  border: 1px solid var(--viewer-border);
   border-radius: 8px;
   outline: none;
-  background: #111;
-  color: #f5f5f5;
+  background: var(--viewer-surface);
+  color: var(--viewer-text);
 }
 
 .viewer-search input:focus {
-  border-color: #555;
+  border-color: var(--viewer-accent);
 }
 
 .viewer-search button {
@@ -102,9 +102,9 @@ input {
 .viewer-stage {
   min-height: 680px;
   overflow: hidden;
-  border: 1px solid #202020;
+  border: 1px solid var(--viewer-border-soft);
   border-radius: 12px;
-  background: #050505;
+  background: var(--viewer-surface-strong);
 }
 
 .viewer-empty,
@@ -114,7 +114,7 @@ input {
   display: grid;
   place-items: center;
   padding: 32px;
-  color: #777;
+  color: var(--viewer-text-dim);
   text-align: center;
 }
 
