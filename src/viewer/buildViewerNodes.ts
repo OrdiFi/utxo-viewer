@@ -8,6 +8,24 @@ import type {
 export type ContentSpecLookup =
   ReadonlyMap<InscriptionId, ContentSpec | null>
 
+function directMembersOf(
+  group: StructuralGroup,
+): InscriptionId[] {
+  const childMembers = new Set<InscriptionId>()
+
+  for (const child of group.children) {
+    for (const id of child.members) {
+      childMembers.add(id)
+    }
+  }
+
+  return group.members.filter(
+    (id) =>
+      id !== group.rootId &&
+      !childMembers.has(id),
+  )
+}
+
 function buildViewerNode(
   group: StructuralGroup,
   specs: ContentSpecLookup,
@@ -26,6 +44,9 @@ function buildViewerNode(
 
     contentSpec:
       specs.get(group.rootId) ?? null,
+
+    members:
+      directMembersOf(group),
 
     children:
       group.children.map((child) =>

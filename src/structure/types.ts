@@ -156,10 +156,16 @@ export type ViewerNode = {
 
   /*
    * Raw content specification belonging to this
-   * inscription. Structural interpretation has
-   * already happened before rendering.
+   * structural anchor.
    */
   contentSpec: ContentSpec | null
+
+  /*
+   * Physical inscriptions belonging directly to
+   * this anchor, excluding the anchor itself and
+   * all members owned by structural child subtrees.
+   */
+  members: InscriptionId[]
 
   /*
    * Direct structural children only.

@@ -72,6 +72,7 @@ describe('buildViewerNodes', () => {
         number: 1,
         relationFromParent: null,
         contentSpec: rootSpec,
+        members: [],
         children: [
           {
             id: 'CHILD',
@@ -83,10 +84,39 @@ describe('buildViewerNodes', () => {
               direction: '+',
             },
             contentSpec: null,
+            members: [],
             children: [],
           },
         ],
       },
+    ])
+  })
+
+  it('preserves direct physical members of a structural anchor', () => {
+    const group: StructuralGroup = {
+      id: {
+        level: 'A',
+        number: 1,
+      },
+      relationFromParent: null,
+      rootId: 'CASE',
+      parent: null,
+      offset: 0,
+      end: 1092,
+      postage: 1092,
+      members: ['ORDINAL', 'CASE'],
+      children: [],
+    }
+
+    const [node] =
+      buildViewerNodes(
+        [group],
+        new Map(),
+      )
+
+    expect(node.id).toBe('CASE')
+    expect(node.members).toEqual([
+      'ORDINAL',
     ])
   })
 
@@ -120,6 +150,7 @@ describe('buildViewerNodes', () => {
         number: 1,
         relationFromParent: null,
         contentSpec: null,
+        members: [],
         children: [],
       },
     ])
