@@ -73,6 +73,7 @@ describe('buildViewerNodes', () => {
         relationFromParent: null,
         contentSpec: rootSpec,
         members: [],
+        sequence: ['ROOT'],
         children: [
           {
             id: 'CHILD',
@@ -85,6 +86,7 @@ describe('buildViewerNodes', () => {
             },
             contentSpec: null,
             members: [],
+            sequence: ['CHILD'],
             children: [],
           },
         ],
@@ -117,6 +119,10 @@ describe('buildViewerNodes', () => {
     expect(node.id).toBe('CASE')
     expect(node.members).toEqual([
       'ORDINAL',
+    ])
+    expect(node.sequence).toEqual([
+      'ORDINAL',
+      'CASE',
     ])
   })
 
@@ -151,6 +157,7 @@ describe('buildViewerNodes', () => {
         relationFromParent: null,
         contentSpec: null,
         members: [],
+        sequence: ['ROOT'],
         children: [],
       },
     ])

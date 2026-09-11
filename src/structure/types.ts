@@ -168,6 +168,15 @@ export type ViewerNode = {
   members: InscriptionId[]
 
   /*
+   * Direct physical render order for this node.
+   *
+   * Contains the anchor itself plus its direct members
+   * in observed UTXO order. Structural child subtrees
+   * are excluded and rendered recursively via children.
+   */
+  sequence: InscriptionId[]
+
+  /*
    * Direct structural children only.
    */
   children: ViewerNode[]

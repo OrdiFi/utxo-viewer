@@ -3,6 +3,7 @@ import type {
 } from 'react'
 
 import type {
+  InscriptionId,
   ViewerNode,
 } from '../structure/types'
 
@@ -10,7 +11,8 @@ export type StructuralViewerProps = {
   roots: readonly ViewerNode[]
 
   renderContent: (
-    node: ViewerNode,
+    id: InscriptionId,
+    owner: ViewerNode,
   ) => ReactNode
 
   className?: string
@@ -20,7 +22,8 @@ type StructuralNodeProps = {
   node: ViewerNode
 
   renderContent: (
-    node: ViewerNode,
+    id: InscriptionId,
+    owner: ViewerNode,
   ) => ReactNode
 }
 
@@ -43,13 +46,29 @@ function StructuralNode({
       }}
     >
       <div
-        data-viewer-content={node.id}
+        data-viewer-sequence={node.id}
         style={{
           position: 'relative',
           width: '100%',
         }}
       >
-        {renderContent(node)}
+        {node.sequence.map((id) => (
+          <div
+            key={id}
+            data-viewer-content={id}
+            data-viewer-anchor={
+              id === node.id
+                ? ''
+                : undefined
+            }
+            style={{
+              position: 'relative',
+              width: '100%',
+            }}
+          >
+            {renderContent(id, node)}
+          </div>
+        ))}
       </div>
 
       {node.children.length > 0 ? (
