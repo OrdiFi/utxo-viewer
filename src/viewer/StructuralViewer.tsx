@@ -27,10 +27,61 @@ type StructuralNodeProps = {
   ) => ReactNode
 }
 
+function StructuralChildren({
+  children,
+  renderContent,
+}: {
+  children: readonly ViewerNode[]
+  renderContent: StructuralNodeProps['renderContent']
+}) {
+  if (children.length === 0) {
+    return null
+  }
+
+  return (
+    <>
+      {children.map((child) => (
+        <StructuralNode
+          key={child.id}
+          node={child}
+          renderContent={renderContent}
+        />
+      ))}
+    </>
+  )
+}
+
 function StructuralNode({
   node,
   renderContent,
 }: StructuralNodeProps) {
+  const negativeChildren =
+    node.children.filter(
+      (child) =>
+        child.relationFromParent
+          ?.direction === '-',
+    )
+
+  const positiveChildren =
+    node.children.filter(
+      (child) =>
+        child.relationFromParent
+          ?.direction === '+',
+    )
+
+  /*
+   * A resolved child should normally have a relationFromParent.
+   *
+   * If malformed external state reaches this renderer anyway,
+   * preserve it after the explicitly positioned children rather
+   * than inventing a direction or dropping content.
+   */
+  const unpositionedChildren =
+    node.children.filter(
+      (child) =>
+        child.relationFromParent === null,
+    )
+
   return (
     <div
       data-viewer-node={node.id}
@@ -45,6 +96,21 @@ function StructuralNode({
         width: '100%',
       }}
     >
+      {negativeChildren.length > 0 ? (
+        <div
+          data-viewer-children-before={node.id}
+          style={{
+            position: 'relative',
+            width: '100%',
+          }}
+        >
+          <StructuralChildren
+            children={negativeChildren}
+            renderContent={renderContent}
+          />
+        </div>
+      ) : null}
+
       <div
         data-viewer-sequence={node.id}
         style={{
@@ -71,21 +137,35 @@ function StructuralNode({
         ))}
       </div>
 
-      {node.children.length > 0 ? (
+      {positiveChildren.length > 0 ? (
         <div
-          data-viewer-children={node.id}
+          data-viewer-children-after={node.id}
           style={{
             position: 'relative',
             width: '100%',
           }}
         >
-          {node.children.map((child) => (
-            <StructuralNode
-              key={child.id}
-              node={child}
-              renderContent={renderContent}
-            />
-          ))}
+          <StructuralChildren
+            children={positiveChildren}
+            renderContent={renderContent}
+          />
+        </div>
+      ) : null}
+
+      {unpositionedChildren.length > 0 ? (
+        <div
+          data-viewer-children-unpositioned={
+            node.id
+          }
+          style={{
+            position: 'relative',
+            width: '100%',
+          }}
+        >
+          <StructuralChildren
+            children={unpositionedChildren}
+            renderContent={renderContent}
+          />
         </div>
       ) : null}
     </div>
@@ -95,14 +175,23 @@ function StructuralNode({
 /*
  * Render an already-resolved structural tree.
  *
- * Structural ordering has already been determined by the resolver.
+ * Structural ownership and sibling ordering have already been
+ * determined by the resolver.
+ *
+ * Child relation direction only determines placement relative
+ * to the owning node's direct physical sequence:
+ *
+ *   negative children
+ *   direct sequence
+ *   positive children
+ *
  * This component does not:
  *
  * - resolve or validate structure
  * - fetch on-chain data
  * - infer layout slots
  * - interpret application/runtime semantics
- * - reorder children
+ * - sort structural siblings
  */
 export function StructuralViewer({
   roots,
