@@ -8,303 +8,517 @@ import {
 function member(
   id: string,
   offset: number,
+  postage: number,
   options: {
-    level?: string
-    number?: number | null
+    incomingLevel?: 'A' | 'B' | 'C'
+    parentLevel?: 'A' | 'B' | 'C'
+    childLevel?: 'A' | 'B' | 'C'
+    number?: number
     direction?: '+' | '-'
-    childLevel?: string | null
-    relationDirection?: '+' | '-'
-    relationOffset?: number
-    postage?: number
+    maxChildren?: number
+    relation?: {
+      direction: '+' | '-'
+      offset: number
+    }
   } = {},
 ): PhysicalMember {
+  const hasStructure =
+    options.incomingLevel !== undefined ||
+    options.parentLevel !== undefined ||
+    options.childLevel !== undefined ||
+    options.direction !== undefined
+
   return {
     id,
     offset,
-    postage: options.postage ?? 100,
+    postage,
 
-    group:
-      options.level && options.direction
-        ? {
-            level: options.level,
-            number: options.number ?? null,
-            childDirection: options.direction,
-            childLevel:
-              options.childLevel ?? null,
-          }
-        : null,
+    group: hasStructure
+      ? {
+          incomingLevel:
+            options.incomingLevel ?? null,
+
+          parentLevel:
+            options.parentLevel ?? null,
+
+          childLevel:
+            options.childLevel ?? null,
+
+          number:
+            options.number ?? null,
+
+          childDirection:
+            options.direction ?? '+',
+
+          maxChildren:
+            options.maxChildren ?? null,
+        }
+      : null,
 
     relation:
-      options.relationDirection
-        ? {
-            direction:
-              options.relationDirection,
-            offset:
-              options.relationOffset ?? 0,
-          }
-        : null,
+      options.relation ?? null,
   }
 }
 
 describe('resolveStructuralGroups', () => {
-  it('resolves positive-direction children', () => {
-    const result = resolveStructuralGroups([
-      member('root', 0, {
-        level: 'A',
-        number: 1,
-        direction: '+',
-        childLevel: 'B',
-      }),
+  it('resolves a direction-only Case with content before it', () => {
+    const groups =
+      resolveStructuralGroups([
+        member('PUNK', 0, 546),
 
-      member('b1-anchor', 100, {
-        level: 'B',
-        number: 1,
-        direction: '+',
-        relationDirection: '+',
-        relationOffset: 0,
-      }),
+        member(
+          'CASE',
+          546,
+          546,
+          {
+            direction: '-',
+            relation: {
+              direction: '-',
+              offset: 0,
+            },
+          },
+        ),
+      ])
 
-      member('b1-content', 200),
+    expect(groups).toHaveLength(1)
 
-      member('b2-anchor', 300, {
-        level: 'B',
-        number: 2,
-        direction: '+',
-        relationDirection: '+',
-        relationOffset: 0,
-      }),
+    const root = groups[0]
 
-      member('b2-content', 400),
+    expect(root.rootId).toBe('CASE')
+    expect(root.parentId).toBeNull()
+
+    expect(root.members).toEqual([
+      'PUNK',
+      'CASE',
     ])
 
-    expect(result).toHaveLength(1)
+    expect(root.offset).toBe(0)
+    expect(root.end).toBe(1092)
+    expect(root.postage).toBe(1092)
+
+    expect(root.children).toHaveLength(0)
+  })
+
+  it('resolves a local A to B relation', () => {
+    const groups =
+      resolveStructuralGroups([
+        member(
+          'SUITCASE',
+          0,
+          546,
+          {
+            parentLevel: 'A',
+            childLevel: 'B',
+            direction: '+',
+            maxChildren: 48,
+          },
+        ),
+
+        member(
+          'CASE',
+          546,
+          546,
+          {
+            incomingLevel: 'B',
+            number: 1,
+            direction: '-',
+          },
+        ),
+      ])
+
+    expect(groups).toHaveLength(1)
+
+    const root = groups[0]
+
+    expect(root.rootId).toBe(
+      'SUITCASE',
+    )
+
+    expect(root.children).toHaveLength(1)
+
+    const child =
+      root.children[0]
+
+    expect(child.rootId).toBe('CASE')
+    expect(child.parentId).toBe(
+      'SUITCASE',
+    )
 
     expect(
-      result[0].children.map(
-        (child) => child.id.number,
-      ),
-    ).toEqual([1, 2])
-
-    expect(result[0].children[0].members).toEqual([
-      'b1-anchor',
-      'b1-content',
-    ])
-
-    expect(result[0].children[1].members).toEqual([
-      'b2-anchor',
-      'b2-content',
-    ])
+      child.relationFromParent,
+    ).toEqual({
+      parentLevel: 'A',
+      childLevel: 'B',
+      direction: '+',
+      number: 1,
+    })
   })
 
-  it('resolves negative-direction content before its anchor', () => {
-    const result = resolveStructuralGroups([
-      member('content', 0),
+  it('allows B in the parent relation and A in the child own relation', () => {
+    const groups =
+      resolveStructuralGroups([
+        member(
+          'ROOT',
+          0,
+          546,
+          {
+            parentLevel: 'A',
+            childLevel: 'B',
+            direction: '+',
+          },
+        ),
 
-      member('b1-anchor', 100, {
-        level: 'B',
-        number: 1,
-        direction: '-',
-        relationDirection: '-',
-        relationOffset: 0,
-      }),
+        member(
+          'NODE',
+          546,
+          546,
+          {
+            incomingLevel: 'B',
+            number: 1,
 
-      member('root', 200, {
-        level: 'A',
-        number: 1,
-        direction: '-',
-        childLevel: 'B',
-      }),
-    ])
+            parentLevel: 'A',
+            childLevel: 'B',
+            direction: '+',
+          },
+        ),
 
-    expect(result).toHaveLength(1)
+        member(
+          'LEAF',
+          1092,
+          546,
+          {
+            incomingLevel: 'B',
+            number: 1,
+          },
+        ),
+      ])
 
-    expect(result[0].children).toHaveLength(1)
+    expect(groups).toHaveLength(1)
 
-    expect(result[0].children[0].members).toEqual([
-      'content',
-      'b1-anchor',
-    ])
+    const root = groups[0]
+    const node =
+      root.children[0]
 
-    expect(result[0].children[0].relationFromParent?.direction).toBe('-')
-  })
-
-  it('sorts children by structural number rather than physical order', () => {
-    const result = resolveStructuralGroups([
-      member('root', 0, {
-        level: 'A',
-        number: 1,
-        direction: '+',
-        childLevel: 'B',
-      }),
-
-      member('b2-anchor', 100, {
-        level: 'B',
-        number: 2,
-        direction: '+',
-        relationDirection: '+',
-        relationOffset: 0,
-      }),
-
-      member('b2-content', 200),
-
-      member('b1-anchor', 300, {
-        level: 'B',
-        number: 1,
-        direction: '+',
-        relationDirection: '+',
-        relationOffset: 0,
-      }),
-
-      member('b1-content', 400),
-    ])
+    expect(node.rootId).toBe('NODE')
 
     expect(
-      result[0].children.map(
-        (child) => child.id.number,
-      ),
-    ).toEqual([1, 2])
+      node.relationFromParent,
+    ).toEqual({
+      parentLevel: 'A',
+      childLevel: 'B',
+      direction: '+',
+      number: 1,
+    })
+
+    expect(
+      node.relationToChildren,
+    ).toEqual({
+      parentLevel: 'A',
+      childLevel: 'B',
+      direction: '+',
+    })
+
+    expect(node.children).toHaveLength(1)
+
+    expect(
+      node.children[0].rootId,
+    ).toBe('LEAF')
   })
 
-  it('rejects duplicate structural numbers on the same child level', () => {
+  it('orders siblings by structural number', () => {
+    const groups =
+      resolveStructuralGroups([
+        member(
+          'ROOT',
+          0,
+          546,
+          {
+            parentLevel: 'A',
+            childLevel: 'B',
+            direction: '+',
+          },
+        ),
+
+        member(
+          'SECOND',
+          546,
+          546,
+          {
+            incomingLevel: 'B',
+            number: 2,
+          },
+        ),
+
+        member(
+          'FIRST',
+          1092,
+          546,
+          {
+            incomingLevel: 'B',
+            number: 1,
+          },
+        ),
+      ])
+
+    expect(
+      groups[0].children.map(
+        (child) =>
+          child.rootId,
+      ),
+    ).toEqual([
+      'FIRST',
+      'SECOND',
+    ])
+  })
+
+  it('rejects duplicate sibling numbers', () => {
     expect(() =>
       resolveStructuralGroups([
-        member('root', 0, {
-          level: 'A',
-          number: 1,
-          direction: '+',
-          childLevel: 'B',
-        }),
+        member(
+          'ROOT',
+          0,
+          546,
+          {
+            parentLevel: 'A',
+            childLevel: 'B',
+            direction: '+',
+          },
+        ),
 
-        member('b1-anchor-a', 100, {
-          level: 'B',
-          number: 1,
-          direction: '+',
-          relationDirection: '+',
-          relationOffset: 0,
-        }),
+        member(
+          'ONE',
+          546,
+          546,
+          {
+            incomingLevel: 'B',
+            number: 1,
+          },
+        ),
 
-        member('b1-content-a', 200),
-
-        member('b1-anchor-b', 300, {
-          level: 'B',
-          number: 1,
-          direction: '+',
-          relationDirection: '+',
-          relationOffset: 0,
-        }),
-
-        member('b1-content-b', 400),
+        member(
+          'TWO',
+          1092,
+          546,
+          {
+            incomingLevel: 'B',
+            number: 1,
+          },
+        ),
       ]),
-    ).toThrow('duplicate structural group B1')
-  })
-})
-
-it('computes structural group physical range from first offset to last end', () => {
-  const result = resolveStructuralGroups([
-    member('root', 0, {
-      level: 'A',
-      number: 1,
-      direction: '+',
-      childLevel: 'B',
-    }),
-
-    member('b1-anchor', 100, {
-      level: 'B',
-      number: 1,
-      direction: '+',
-      relationDirection: '+',
-      relationOffset: 0,
-    }),
-
-    member('b1-content', 200),
-  ])
-
-  const child = result[0].children[0]
-
-  expect(child.offset).toBe(100)
-  expect(child.end).toBe(300)
-  expect(child.postage).toBe(200)
-})
-
-it('resolves nested structural subtrees recursively', () => {
-  const result = resolveStructuralGroups([
-    member('ROOT', 0, {
-      level: 'A',
-      number: 1,
-      direction: '+',
-      childLevel: 'B',
-      postage: 546,
-    }),
-
-    member('LEAF-1', 546, {
-      postage: 600,
-    }),
-
-    member('NODE-1', 1146, {
-      level: 'B',
-      number: 1,
-      direction: '-',
-      childLevel: 'C',
-      relationDirection: '-',
-      relationOffset: 0,
-      postage: 546,
-    }),
-
-    member('LEAF-2', 1692, {
-      postage: 600,
-    }),
-
-    member('NODE-2', 2292, {
-      level: 'B',
-      number: 2,
-      direction: '-',
-      childLevel: 'C',
-      relationDirection: '-',
-      relationOffset: 0,
-      postage: 546,
-    }),
-  ])
-
-  expect(result).toHaveLength(1)
-
-  const root = result[0]
-
-  expect(root.id).toEqual({
-    level: 'A',
-    number: 1,
+    ).toThrow(
+      /duplicate structural child number/,
+    )
   })
 
-  expect(root.children).toHaveLength(2)
+  it('resolves Suitcase containing a Case whose content is before the Case', () => {
+    const groups =
+      resolveStructuralGroups([
+        member(
+          'SUITCASE',
+          0,
+          546,
+          {
+            parentLevel: 'A',
+            childLevel: 'B',
+            direction: '+',
+            maxChildren: 48,
+          },
+        ),
 
-  const first = root.children[0]
-  const second = root.children[1]
+        member(
+          'PUNK',
+          546,
+          546,
+        ),
 
-  expect(first.rootId).toBe('NODE-1')
-  expect(first.members).toEqual([
-    'LEAF-1',
-    'NODE-1',
-  ])
-  expect(first.offset).toBe(546)
-  expect(first.end).toBe(1692)
-  expect(first.postage).toBe(1146)
+        member(
+          'CASE',
+          1092,
+          546,
+          {
+            direction: '-',
 
-  expect(first.children).toHaveLength(1)
-  expect(first.children[0].rootId).toBe('LEAF-1')
-  expect(first.children[0].id).toEqual({
-    level: 'C',
-    number: 1,
+            relation: {
+              direction: '-',
+              offset: 0,
+            },
+          },
+        ),
+      ])
+
+    expect(groups).toHaveLength(1)
+
+    const suitcase =
+      groups[0]
+
+    expect(suitcase.rootId).toBe(
+      'SUITCASE',
+    )
+
+    expect(
+      suitcase.children,
+    ).toHaveLength(1)
+
+    const caseGroup =
+      suitcase.children[0]
+
+    expect(caseGroup.rootId).toBe(
+      'CASE',
+    )
+
+    expect(caseGroup.parentId).toBe(
+      'SUITCASE',
+    )
+
+    expect(caseGroup.members).toEqual([
+      'PUNK',
+      'CASE',
+    ])
+
+    expect(suitcase.members).toEqual([
+      'SUITCASE',
+      'PUNK',
+      'CASE',
+    ])
   })
 
-  expect(second.rootId).toBe('NODE-2')
-  expect(second.members).toEqual([
-    'LEAF-2',
-    'NODE-2',
-  ])
+  it('enforces maxChildren', () => {
+    expect(() =>
+      resolveStructuralGroups([
+        member(
+          'ROOT',
+          0,
+          546,
+          {
+            parentLevel: 'A',
+            childLevel: 'B',
+            direction: '+',
+            maxChildren: 1,
+          },
+        ),
 
-  expect(second.children).toHaveLength(1)
-  expect(second.children[0].rootId).toBe('LEAF-2')
-  expect(second.children[0].id).toEqual({
-    level: 'C',
-    number: 1,
+        member(
+          'ONE',
+          546,
+          546,
+          {
+            incomingLevel: 'B',
+            number: 1,
+          },
+        ),
+
+        member(
+          'TWO',
+          1092,
+          546,
+          {
+            incomingLevel: 'B',
+            number: 2,
+          },
+        ),
+      ]),
+    ).toThrow(
+      /exceeds maxChildren 1/,
+    )
   })
+
+  it('resolves multiple nested Case subtrees before assigning them to the Suitcase', () => {
+    const groups =
+      resolveStructuralGroups([
+        member(
+          'SUITCASE',
+          0,
+          546,
+          {
+            parentLevel: 'A',
+            childLevel: 'B',
+            direction: '+',
+            maxChildren: 48,
+          },
+        ),
+
+        member(
+          'PUNK-1',
+          546,
+          546,
+        ),
+
+        member(
+          'CASE-1',
+          1092,
+          546,
+          {
+            incomingLevel: 'B',
+            number: 1,
+            direction: '-',
+
+            relation: {
+              direction: '-',
+              offset: 0,
+            },
+          },
+        ),
+
+        member(
+          'PUNK-2',
+          1638,
+          546,
+        ),
+
+        member(
+          'CASE-2',
+          2184,
+          546,
+          {
+            incomingLevel: 'B',
+            number: 2,
+            direction: '-',
+
+            relation: {
+              direction: '-',
+              offset: 0,
+            },
+          },
+        ),
+      ])
+
+    expect(groups).toHaveLength(1)
+
+    const suitcase = groups[0]
+
+    expect(suitcase.rootId).toBe('SUITCASE')
+    expect(suitcase.children).toHaveLength(2)
+
+    expect(
+      suitcase.children.map(
+        (child) => child.rootId,
+      ),
+    ).toEqual([
+      'CASE-1',
+      'CASE-2',
+    ])
+
+    expect(
+      suitcase.children[0].members,
+    ).toEqual([
+      'PUNK-1',
+      'CASE-1',
+    ])
+
+    expect(
+      suitcase.children[1].members,
+    ).toEqual([
+      'PUNK-2',
+      'CASE-2',
+    ])
+
+    expect(suitcase.members).toEqual([
+      'SUITCASE',
+      'PUNK-1',
+      'CASE-1',
+      'PUNK-2',
+      'CASE-2',
+    ])
+  })
+
 })

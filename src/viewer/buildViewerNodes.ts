@@ -43,11 +43,26 @@ function buildViewerNode(
     offset: group.offset,
     postage: group.postage,
 
-    level: group.id.level,
-    number: group.id.number,
+    level:
+      group.relationFromParent
+        ?.childLevel ??
+      group.relationToChildren
+        ?.parentLevel ??
+      null,
+
+    number:
+      group.relationFromParent
+        ?.number ??
+      null,
 
     relationFromParent:
-      group.relationFromParent,
+      group.relationFromParent
+        ? {
+            direction:
+              group.relationFromParent
+                .direction,
+          }
+        : null,
 
     contentSpec:
       specs.get(group.rootId) ?? null,

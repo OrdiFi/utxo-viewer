@@ -27,10 +27,6 @@ function readDirection(value: unknown): StructuralDirection {
   throw new Error('invalid structural direction')
 }
 
-function levelIndex(level: string): number {
-  return level.charCodeAt(0) - 'A'.charCodeAt(0)
-}
-
 export function readStructuralSpec(
   value: unknown,
 ): StructuralSpec {
@@ -103,29 +99,31 @@ export function readStructuralSpec(
         'relation child',
       )
 
-      if (
-        levelIndex(childLevel) !==
-        levelIndex(parentLevel) + 1
-      ) {
-        throw new Error(
-          `child level ${childLevel} must directly follow parent level ${parentLevel}`,
-        )
-      }
-
       const direction = readDirection(
         relation.direction,
       )
 
-      const maxChildren = relation.maxChildren
+      const rawMaxChildren =
+        relation.maxChildren
+
+      let maxChildren:
+        number | undefined
 
       if (
-        typeof maxChildren !== 'number' ||
-        !Number.isInteger(maxChildren) ||
-        maxChildren <= 0
+        rawMaxChildren !== undefined
       ) {
-        throw new Error(
-          `maxChildren must be greater than zero for ${parentLevel} -> ${childLevel} ${direction}`,
-        )
+        if (
+          typeof rawMaxChildren !== 'number' ||
+          !Number.isInteger(rawMaxChildren) ||
+          rawMaxChildren <= 0
+        ) {
+          throw new Error(
+            `maxChildren must be greater than zero for ${parentLevel} -> ${childLevel} ${direction}`,
+          )
+        }
+
+        maxChildren =
+          rawMaxChildren
       }
 
       const relationKey =
@@ -143,7 +141,9 @@ export function readStructuralSpec(
         parentLevel,
         childLevel,
         direction,
-        maxChildren,
+        ...(maxChildren !== undefined
+          ? { maxChildren }
+          : {}),
       }
     })
 

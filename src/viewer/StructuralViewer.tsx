@@ -81,7 +81,7 @@ function StructuralNode({
         >
           {node.children.map((child) => (
             <StructuralNode
-              key={`${child.level}:${child.number}:${child.id}`}
+              key={child.id}
               node={child}
               renderContent={renderContent}
             />
@@ -120,7 +120,7 @@ export function StructuralViewer({
     >
       {roots.map((root) => (
         <StructuralNode
-          key={`${root.level}:${root.number}:${root.id}`}
+          key={root.id}
           node={root}
           renderContent={renderContent}
         />
