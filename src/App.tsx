@@ -144,6 +144,18 @@ function App() {
       }
     >
       <header className="viewer-toolbar">
+        <div className="viewer-brand">
+          <img
+            src="/brand/minihero.webp"
+            alt="OrdiFi"
+            className="viewer-brand-logo"
+          />
+
+          <div className="viewer-brand-title">
+            UTXO Viewer
+          </div>
+        </div>
+
         <form
           className="viewer-search"
           onSubmit={submit}
@@ -346,9 +358,24 @@ function App() {
             />
           ) : (
             <div className="viewer-empty">
-              Enter an inscription ID,
-              inscription number, UTXO or
-              satpoint.
+              <div className="viewer-empty-hero">
+                <img
+                  src="/brand/minihero.webp"
+                  alt="OrdiFi"
+                  className="viewer-empty-logo"
+                />
+
+                <h1>UTXO Viewer</h1>
+
+                <p>
+                  Interpret live Bitcoin UTXO structure.
+                </p>
+
+                <div className="viewer-empty-hint">
+                  Enter an inscription ID, inscription
+                  number, UTXO or satpoint above.
+                </div>
+              </div>
             </div>
           )}
           </div>
