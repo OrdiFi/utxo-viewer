@@ -98,7 +98,15 @@ export type ContentSpec = {
 
 export type ViewerOutputInscription = {
   id: InscriptionId
+
+  /*
+   * Observed physical UTXO geometry.
+   *
+   * No default or inferred postage is permitted.
+   */
   offset: number
+  postage: number
+
   satpoint?: Satpoint | null
   number?: number | null
 }
