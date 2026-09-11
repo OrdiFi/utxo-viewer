@@ -81,6 +81,7 @@ describe('loadViewerState', () => {
         relationFromParent: null,
         contentSpec: null,
         members: [],
+        sequence: ['ORDINAL'],
         children: [],
       },
     ])
@@ -148,6 +149,7 @@ describe('loadViewerState', () => {
       relationFromParent: null,
       contentSpec: caseSpec,
       members: ['ORDINAL'],
+      sequence: ['ORDINAL', 'CASE'],
       children: [],
     })
 
@@ -160,6 +162,7 @@ describe('loadViewerState', () => {
       relationFromParent: null,
       contentSpec: null,
       members: [],
+      sequence: ['LOOSE'],
       children: [],
     })
   })

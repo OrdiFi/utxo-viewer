@@ -10,6 +10,7 @@ import type {
 } from '../provider/ViewerProvider'
 
 import type {
+  InscriptionId,
   ViewerNode,
 } from '../structure/types'
 
@@ -53,11 +54,11 @@ type ContentState =
 
 function ContentNode({
   provider,
-  node,
+  id,
   sandbox,
 }: {
   provider: ViewerProvider
-  node: ViewerNode
+  id: InscriptionId
   sandbox?: string
 }) {
   const [state, setState] =
@@ -73,7 +74,7 @@ function ContentNode({
     })
 
     provider
-      .getContent(node.id)
+      .getContent(id)
       .then((content) => {
         if (!mounted) {
           return
@@ -101,12 +102,12 @@ function ContentNode({
     return () => {
       mounted = false
     }
-  }, [provider, node.id])
+  }, [provider, id])
 
   if (state.status === 'loading') {
     return (
       <div
-        data-viewer-loading={node.id}
+        data-viewer-loading={id}
       >
         Loading…
       </div>
@@ -116,7 +117,7 @@ function ContentNode({
   if (state.status === 'error') {
     return (
       <div
-        data-viewer-error={node.id}
+        data-viewer-error={id}
         role="alert"
       >
         {state.error}
@@ -127,7 +128,7 @@ function ContentNode({
   return (
     <ContentRenderer
       content={state.content}
-      title={node.id}
+      title={id}
       sandbox={sandbox}
     />
   )
@@ -200,10 +201,13 @@ export function ViewerRoot({
   const renderContent =
     useMemo(
       () =>
-        (node: ViewerNode) => (
+        (
+          id: InscriptionId,
+          _owner: ViewerNode,
+        ) => (
           <ContentNode
             provider={provider}
-            node={node}
+            id={id}
             sandbox={sandbox}
           />
         ),

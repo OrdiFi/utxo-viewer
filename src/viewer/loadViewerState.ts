@@ -78,6 +78,7 @@ function makeUnstructuredNode(
     contentSpec: spec,
 
     members: [],
+    sequence: [inscription.id],
     children: [],
   }
 }

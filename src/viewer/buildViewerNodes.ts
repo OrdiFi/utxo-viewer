@@ -8,7 +8,7 @@ import type {
 export type ContentSpecLookup =
   ReadonlyMap<InscriptionId, ContentSpec | null>
 
-function directMembersOf(
+function directSequenceOf(
   group: StructuralGroup,
 ): InscriptionId[] {
   const childMembers = new Set<InscriptionId>()
@@ -21,8 +21,15 @@ function directMembersOf(
 
   return group.members.filter(
     (id) =>
-      id !== group.rootId &&
       !childMembers.has(id),
+  )
+}
+
+function directMembersOf(
+  group: StructuralGroup,
+): InscriptionId[] {
+  return directSequenceOf(group).filter(
+    (id) => id !== group.rootId,
   )
 }
 
@@ -47,6 +54,9 @@ function buildViewerNode(
 
     members:
       directMembersOf(group),
+
+    sequence:
+      directSequenceOf(group),
 
     children:
       group.children.map((child) =>
