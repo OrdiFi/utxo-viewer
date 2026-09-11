@@ -76,6 +76,13 @@ function App() {
   const [fullscreen, setFullscreen] =
     useState(false)
 
+  const selectedInfoId =
+    mode === 'single'
+      ? state?.output.inscriptions[
+          activeIndex
+        ]?.id ?? null
+      : null
+
   useEffect(() => {
     const sync = () => {
       setFullscreen(
@@ -350,6 +357,7 @@ function App() {
         {infoOpen ? (
           <ViewerInfoPanel
             state={state}
+            selectedId={selectedInfoId}
           />
         ) : null}
       </section>

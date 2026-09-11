@@ -19,6 +19,7 @@ type Tab =
 
 export type ViewerInfoPanelProps = {
   state: ViewerState | null
+  selectedId?: InscriptionId | null
 }
 
 function Value({
@@ -59,12 +60,14 @@ function Value({
 
 export function ViewerInfoPanel({
   state,
+  selectedId: selectedIdProp,
 }: ViewerInfoPanelProps) {
   const [tab, setTab] =
     useState<Tab>('info')
 
   const selectedId =
     (
+      selectedIdProp ??
       state?.input.id ??
       state?.roots[0]?.id ??
       state?.output.inscriptions[0]?.id ??
