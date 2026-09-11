@@ -353,6 +353,10 @@ function App() {
               input={input}
               mode={mode}
               activeIndex={activeIndex}
+              onSelectPhysicalIndex={(index) => {
+                setActiveIndex(index)
+                setMode('single')
+              }}
               sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
               onStateChange={setState}
             />

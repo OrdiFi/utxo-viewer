@@ -42,6 +42,10 @@ export type ViewerRootProps = {
   mode?: ViewerMode
   activeIndex?: number
 
+  onSelectPhysicalIndex?: (
+    index: number,
+  ) => void
+
   className?: string
   sandbox?: string
 
@@ -174,6 +178,7 @@ export function ViewerRoot({
   input,
   mode = 'structure',
   activeIndex = 0,
+  onSelectPhysicalIndex,
   className,
   sandbox,
   onStateChange,
@@ -323,11 +328,16 @@ export function ViewerRoot({
           mode,
           activeIndex,
         ).map(
-          (entry) => (
-            <div
-              key={entry.id}
+          (entry, index) => (
+            <button
+              key={`${entry.id}:${index}`}
+              type="button"
+              className="viewer-grid-item"
               data-viewer-grid-item={entry.id}
               data-viewer-offset={entry.offset}
+              onClick={() =>
+                onSelectPhysicalIndex?.(index)
+              }
             >
               {renderContent(
                 entry.id,
@@ -336,7 +346,7 @@ export function ViewerRoot({
                   state,
                 ),
               )}
-            </div>
+            </button>
           ),
         )}
       </div>

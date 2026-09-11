@@ -588,3 +588,38 @@ input {
     width: 76px;
   }
 }
+
+.viewer-grid-item {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  aspect-ratio: 1;
+  border: 1px solid var(--viewer-border-soft);
+  border-radius: 9px;
+  background: #050505;
+  color: inherit;
+  cursor: pointer;
+}
+
+.viewer-grid-item:hover {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--viewer-accent) 52%,
+      var(--viewer-border)
+    );
+}
+
+.viewer-grid-item:focus-visible {
+  outline: 2px solid var(--viewer-accent);
+  outline-offset: 2px;
+}
+
+.viewer-grid-item iframe,
+.viewer-grid-item img,
+.viewer-grid-item video {
+  width: 100%;
+  height: 100%;
+}
