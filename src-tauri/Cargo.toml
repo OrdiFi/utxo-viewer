@@ -1,6 +1,6 @@
 [package]
 name = "ordifi-utxo-viewer"
-version = "0.1.0"
+version = "1.0.1"
 description = "OrdiFi UTXO Viewer desktop application"
 authors = ["Artur Hreczynski <admin@ordifi.io>"]
 license = ""
