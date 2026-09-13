@@ -150,7 +150,8 @@ implements ViewerProvider {
       normalizeBaseUrl(options.baseUrl)
 
     this.fetcher =
-      options.fetcher ?? fetch
+      options.fetcher ??
+      globalThis.fetch.bind(globalThis)
   }
 
   private url(path: string): string {
