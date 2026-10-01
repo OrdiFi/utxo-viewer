@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import SpecLabelMeta from "./SpecLabelMeta";
 import { OrdiFiRuntime } from "./OrdiFiRuntime";
+import SurfacePairRuntime from "./SurfacePairRuntime";
+import CaseSurfaceRuntime from "./CaseSurfaceRuntime";
+import CaseBackRuntime from "./CaseBackRuntime";
+import RuntimeBadge from "./RuntimeBadge";
+import { detectOrdifiMeta } from "./ordinalMeta";
 import { viewerApiFetch, viewerUrl } from "./viewerApi";
 import {
   normalizeGroupDirective,
@@ -22,7 +27,11 @@ type Placement = {
   offset?: number | null;
 };
 
-
+type SurfacePair = {
+  frontId: string;
+  backId: string;
+  offset: number;
+};
 
 const DEFAULT_GRID4_SPEC = {
   layout: { width: 2048, height: 2048 },
@@ -266,6 +275,15 @@ function CompositionFrame({
   const labelTemplateId = resolvedSpec?.label?.template?.id;
   const labelContentId = itemIds[0] ?? null;
 
+  const caseLayoutName = String(
+    resolvedSpec?.layoutName ??
+    resolvedSpec?.spec?.layoutName ??
+    resolvedSpec?.layout?.name ??
+    ""
+  ).toLowerCase();
+
+  const isCaseLayout = caseLayoutName === "case";
+
   return (
     <div
       style={{
@@ -287,23 +305,30 @@ function CompositionFrame({
         }}
       >
         {/* ROOT / LAYOUT BACKGROUND */}
-        <iframe
-          src={viewerUrl(`/api/inscription/${info.rootId}?viewer=1&embed=1`)}
-          title={info.rootId}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            border: "none",
-            display: "block",
-            background: "transparent",
-            zIndex: 1,
-            pointerEvents: "none",
-          }}
-          scrolling="no"
-          sandbox="allow-scripts"
-        />
+        {isCaseLayout ? (
+          <CaseSurfaceRuntime
+            id={info.rootId}
+            size={size}
+          />
+        ) : (
+          <iframe
+            src={viewerUrl(`/api/inscription/${info.rootId}?viewer=1&embed=1`)}
+            title={info.rootId}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              border: "none",
+              display: "block",
+              background: "transparent",
+              zIndex: 1,
+              pointerEvents: "none",
+            }}
+            scrolling="no"
+            sandbox="allow-scripts"
+          />
+        )}
         {labelArea && labelContentId ? (
             <SpecLabelMeta
               inscriptionId={labelContentId}
@@ -394,7 +419,7 @@ function CompositionFrame({
                 scrolling="no"
                 sandbox="allow-scripts"
               />
-            </div>
+</div>
           );
         })}
       </div>
@@ -558,6 +583,52 @@ function isRuntimeObject(spec: any) {
   );
 }
 
+function caseContentIdFromComposition(
+  composition: LogicalComposition | null | undefined,
+  frontId: string,
+  backId: string,
+  fallbackItems: Placement[],
+) {
+  const children = Array.isArray((composition as any)?.children)
+    ? (composition as any).children
+    : [];
+
+  for (const child of children) {
+    const candidates: string[] = [];
+
+    if (typeof child?.specId === "string") {
+      candidates.push(child.specId);
+    }
+
+    if (Array.isArray(child?.ids)) {
+      for (const id of child.ids) {
+        if (typeof id === "string") candidates.push(id);
+      }
+    }
+
+    if (Array.isArray(child?.members)) {
+      for (const member of child.members) {
+        const id = member?.placement?.id;
+        if (typeof id === "string") candidates.push(id);
+      }
+    }
+
+    const contentId = candidates.find(
+      (id) => id !== frontId && id !== backId,
+    );
+
+    if (contentId) return contentId;
+  }
+
+  return (
+    fallbackItems.find(
+      (item) =>
+        item.id !== frontId &&
+        item.id !== backId,
+    )?.id ?? null
+  );
+}
+
 function UtxoViewer({
   utxo,
   size,
@@ -589,7 +660,7 @@ function UtxoViewer({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-
+  const [surfacePairs, setSurfacePairs] = useState<SurfacePair[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -600,6 +671,7 @@ function UtxoViewer({
       setActiveIndex(null);
       setSpecRootId(null);
       setSpecData(null);
+      setSurfacePairs([]);
       setResolvedLogicalCompositions([]);
 
       try {
@@ -623,38 +695,110 @@ function UtxoViewer({
   ? offsetsJson.entries
   : [];
 
-// Neutral UTXO Viewer:
-// one physical offset/satpoint = one visible inscription.
-// If several inscriptions share the same offset,
-// only the first entry participates in viewer structure.
+/*
+ * Neutral physical rule:
+ * one satpoint becomes one visible structural member.
+ *
+ * Exception:
+ * an explicit OrdiFi front/back pair on the same satpoint
+ * is treated as one two-sided presentation object.
+ *
+ * The front remains the structural member. The back is
+ * presentation-only and does not alter structural semantics.
+ */
 
+const rawPlacements: Placement[] = offsetEntries
+  .map((entry: any, index: number) => ({
+    id: String(entry.id),
+    index,
+    offset: entry.offset ?? null,
+  }))
+  .filter(
+    (item: Placement) =>
+      item.id && item.offset !== null,
+  )
+  .sort(
+    (a: Placement, b: Placement) =>
+      Number(a.offset) - Number(b.offset) ||
+      Number(a.index ?? 0) - Number(b.index ?? 0),
+  );
 
-const normalizedWithOffsets = (() => {
-  const seenOffsets = new Set<number>();
+const byOffset = new Map<number, Placement[]>();
 
-  return offsetEntries
-    .map((entry: any, index: number) => ({
-      id: String(entry.id),
-      index,
-      offset: entry.offset ?? null,
-    }))
-    .filter((item: Placement) => item.id && item.offset !== null)
-    .sort(
-      (a: Placement, b: Placement) =>
-        Number(a.offset) - Number(b.offset) ||
-        Number(a.index ?? 0) - Number(b.index ?? 0),
-    )
-    .filter((item: Placement) => {
-      const offset = Number(item.offset);
+for (const item of rawPlacements) {
+  const offset = Number(item.offset);
+  const group = byOffset.get(offset) ?? [];
 
-      if (seenOffsets.has(offset)) {
-        return false;
-      }
+  group.push(item);
+  byOffset.set(offset, group);
+}
 
-      seenOffsets.add(offset);
-      return true;
+const normalizedWithOffsets: Placement[] = [];
+const foundSurfacePairs: SurfacePair[] = [];
+
+for (const [offset, group] of byOffset) {
+  if (group.length === 1) {
+    normalizedWithOffsets.push(group[0]);
+    continue;
+  }
+
+  const classified = await Promise.all(
+    group.map(async (item) => {
+      const meta = await detectOrdifiMeta(item.id);
+
+      return {
+        item,
+        side: meta.side,
+      };
+    }),
+  );
+
+  const frontCandidates = classified.filter(
+    (entry) => entry.side === "front",
+  );
+
+  const backCandidates = classified.filter(
+    (entry) => entry.side === "back",
+  );
+
+  const back =
+    backCandidates.length === 1
+      ? backCandidates[0].item
+      : null;
+
+  /*
+   * Compatibility:
+   * Older/front inscriptions may not yet carry
+   * ordifi:side=front. If exactly one back exists and
+   * exactly two inscriptions share the satpoint,
+   * the other inscription is the front.
+   */
+  const front =
+    frontCandidates.length === 1
+      ? frontCandidates[0].item
+      : back && group.length === 2
+        ? group.find(
+            (item) => item.id !== back.id,
+          ) ?? null
+        : null;
+
+  if (front && back) {
+    foundSurfacePairs.push({
+      frontId: front.id,
+      backId: back.id,
+      offset,
     });
-})();
+
+    normalizedWithOffsets.push(front);
+    continue;
+  }
+
+  /*
+   * Ambiguous multi-inscription satpoint:
+   * preserve the neutral viewer behaviour.
+   */
+  normalizedWithOffsets.push(group[0]);
+}
 
 const physicalMembers: PhysicalMember[] = [];
 let foundSpecData: any = null;
@@ -750,6 +894,7 @@ if (normalizedWithOffsets.length === 0) {
 }
 
 setItems(normalizedWithOffsets);
+setSurfacePairs(foundSurfacePairs);
 
 setSpecRootId(foundSpecRootId);
 setSpecData(foundSpecData);
@@ -862,8 +1007,85 @@ useEffect(() => {
 
 
 
+  const rootSurfacePair = specRootId
+    ? surfacePairs.find(
+        (pair) => pair.frontId === specRootId,
+      ) ?? null
+    : null;
+
+  const activeSurfacePair = activeItem
+    ? surfacePairs.find(
+        (pair) => pair.frontId === activeItem.id,
+      ) ?? null
+    : null;
+
+  const rootIsCase =
+    String(
+      specData?.layoutName ??
+      specData?.spec?.layoutName ??
+      specData?.layout?.name ??
+      ""
+    ).toLowerCase() === "case";
+
+  const rootCaseContentId =
+    rootSurfacePair && rootIsCase
+      ? caseContentIdFromComposition(
+          rootLogicalComposition,
+          rootSurfacePair.frontId,
+          rootSurfacePair.backId,
+          items,
+        )
+      : null;
+
+  const rootRuntimeComponent = runtimeComponent(specData);
+
+  const showingRuntimeRoot =
+    !activeItem || activeItem.id === specRootId;
+
+  const runtimeBadgeLabel =
+    showingRuntimeRoot
+      ? rootIsCase && rootSurfacePair
+        ? "Case"
+        : runtimeEnabled && rootRuntimeComponent.includes("suitcase")
+          ? "Suitcase"
+          : runtimeEnabled && rootRuntimeComponent.includes("album")
+            ? "Album"
+            : null
+      : null;
+
+  const rootView = specRootId
+    ? runtimeEnabled && isRuntimeObject(specData)
+      ? (
+          <OrdiFiRuntime
+            rootId={specRootId}
+            spec={specData}
+            logicalComposition={
+              rootLogicalComposition ?? undefined
+            }
+            size={size}
+            renderChild={renderRuntimeChild}
+          />
+        )
+      : (
+          <ViewerFrame
+            id={specRootId}
+            size={size}
+            isPreview={isPreview}
+          />
+        )
+    : null;
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div
+      style={{
+        position: "relative",
+        width: size,
+        margin: "0 auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+      }}
+    >
 
       {!isPreview && !viewerOnly ? (<div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
           <button
@@ -908,33 +1130,81 @@ useEffect(() => {
 
 
               {activeItem ? (
-  activeItem.id ? (
-    <PreviewFrame id={activeItem.id} size={size} />
-  ) : (
-    <div>Missing inscription id for selected offset.</div>
-  )
-         ) : runtimeEnabled &&
-             specRootId &&
-             isRuntimeObject(specData) ? (
-                  <OrdiFiRuntime
-                    rootId={specRootId}
-                    spec={specData}
-                    logicalComposition={
-                      rootLogicalComposition ??
-                      undefined
+                activeItem.id ? (
+                  activeSurfacePair ? (
+                    <SurfacePairRuntime
+                      front={
+                        activeItem.id === specRootId &&
+                        rootView
+                          ? rootView
+                          : (
+                              <ViewerFrame
+                                id={activeItem.id}
+                                size={size}
+                                isPreview={isPreview}
+                              />
+                            )
+                      }
+                      back={
+                        activeItem.id === specRootId && rootIsCase ? (
+                          <CaseBackRuntime
+                            backId={activeSurfacePair.backId}
+                            contentId={rootCaseContentId}
+                            size={size}
+                          />
+                        ) : (
+                          <PreviewFrame
+                            id={activeSurfacePair.backId}
+                            size={size}
+                          />
+                        )
+                      }
+                      size={size}
+                    />
+                  ) : (
+                    <PreviewFrame
+                      id={activeItem.id}
+                      size={size}
+                    />
+                  )
+                ) : (
+                  <div>
+                    Missing inscription id for selected offset.
+                  </div>
+                )
+              ) : specRootId ? (
+                rootSurfacePair ? (
+                  <SurfacePairRuntime
+                    front={rootView}
+                    back={
+                      rootIsCase ? (
+                        <CaseBackRuntime
+                          backId={rootSurfacePair.backId}
+                          contentId={rootCaseContentId}
+                          size={size}
+                        />
+                      ) : (
+                        <PreviewFrame
+                          id={rootSurfacePair.backId}
+                          size={size}
+                        />
+                      )
                     }
                     size={size}
-                    renderChild={renderRuntimeChild}
-                  />
-                ) : specRootId ? (
-                  <ViewerFrame
-                    id={specRootId}
-                    size={size}
-                    isPreview={isPreview}
                   />
                 ) : (
-                  <FallbackCompositionFrame ids={ids} size={size} />
-                )}
+                  rootView
+                )
+              ) : (
+                <FallbackCompositionFrame
+                  ids={ids}
+                  size={size}
+                />
+              )}
+
+              {runtimeBadgeLabel ? (
+                <RuntimeBadge label={runtimeBadgeLabel} />
+              ) : null}
             </div>
           );
         }

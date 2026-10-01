@@ -219,27 +219,7 @@ function SuitcaseRuntime({
         background: "transparent",
       }}
     >
-        <div
-      style={{
-        position: "absolute",
-        bottom: 8,
-        right: 18,
-        zIndex: 9999,
-        padding: "3px 6px",
-        borderRadius: 4,
-        background: "rgba(0,0,0,0.55)",
-        color: "white",
-        fontSize: 10,
-        fontWeight: 600,
-        letterSpacing: "0.04em",
-        pointerEvents: "none",
-        userSelect: "none",
-      }}
-    >
-      Runtime · Suitcase
-    </div>
-
-      <div
+<div
         style={{
           position: "absolute",
           width: BASE,
