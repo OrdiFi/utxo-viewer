@@ -738,14 +738,6 @@ function App() {
                     : 'Runtime is disabled.'}
                 </div>
 
-                <a
-                  className="viewer-settings-link"
-                  href="https://ordifi.io/resources/downloads"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Runtime downloads &rarr;
-                </a>
               </section>
             </div>
           </section>
