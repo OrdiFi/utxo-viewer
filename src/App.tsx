@@ -8,6 +8,7 @@ import type {
 } from 'react'
 
 import './App.css'
+import { version } from '../package.json'
 
 import { getCurrentWindow } from '@tauri-apps/api/window'
 
@@ -19,6 +20,13 @@ import {
   setViewerApiSettings,
   viewerApiFetch,
 } from './webapp-viewer/viewerApi'
+
+const VIEWER_API_PAGE = 'https://ordifi.io/resources/apis'
+const UPDATE_INFO_DISMISSED_KEY = 'ordifi:viewer-update-info-dismissed'
+
+function openViewerApiPage() {
+  window.open(VIEWER_API_PAGE, '_blank', 'noopener,noreferrer')
+}
 
 type ViewerInfo = {
   id: string | null
@@ -32,6 +40,16 @@ type ViewerInfo = {
 }
 
 function App() {
+  const [startPage, setStartPage] = useState<1 | 2>(1)
+  const [updateInfoOpen, setUpdateInfoOpen] = useState(
+    () => localStorage.getItem(UPDATE_INFO_DISMISSED_KEY) !== version,
+  )
+
+  function dismissUpdateInfo() {
+    localStorage.setItem(UPDATE_INFO_DISMISSED_KEY, version)
+    setUpdateInfoOpen(false)
+  }
+
   const [draft, setDraft] =
     useState('')
 
@@ -369,10 +387,13 @@ function App() {
     }
   }
 
+  const showUpdateInfo = updateInfoOpen && !input
+  const showInfo = infoOpen && !showUpdateInfo
+
   return (
     <main
       className={
-        infoOpen
+        showInfo
           ? 'viewer-shell has-info'
           : 'viewer-shell'
       }
@@ -516,6 +537,68 @@ function App() {
                 </section>
               ) : null}
             </div>
+          ) : showUpdateInfo ? (
+            <section className="viewer-start-card" aria-labelledby="viewer-start-title">
+              <header className="viewer-start-header">
+                <span>Update information · OrdiFi UTXO Viewer {version}</span>
+                <div className="viewer-start-header-actions">
+                  <span aria-live="polite">Page {startPage} / 2</span>
+                  <button
+                    type="button"
+                    className="viewer-icon-button"
+                    aria-label="Close update information"
+                    title="Close update information"
+                    onClick={dismissUpdateInfo}
+                  >
+                    &times;
+                  </button>
+                </div>
+              </header>
+              {startPage === 1 ? (
+                <div className="viewer-start-guide">
+                  <h1 id="viewer-start-title">Viewer API access</h1>
+                  <p>A free OrdiFi API token lets the Viewer load Bitcoin UTXOs and inscriptions.</p>
+                  <ol>
+                    <li>On the OrdiFi API website, connect your Bitcoin wallet.</li>
+                    <li>Select <strong>Verify Bitcoin Wallet</strong> and confirm the message in your wallet.</li>
+                    <li>Under <strong>Viewer API</strong>, select <strong>Generate API Token</strong>, then <strong>Copy token</strong>.</li>
+                    <li>In <strong>Viewer Settings → APIs</strong>, paste the token into <strong>API Token</strong> and select <strong>Save</strong>.</li>
+                  </ol>
+                  <div className="viewer-start-website">
+                    <strong>OrdiFi API website</strong>
+                    <a href={VIEWER_API_PAGE} target="_blank" rel="noopener noreferrer">{VIEWER_API_PAGE}</a>
+                    <span>Opens an external website. No download is required.</span>
+                  </div>
+                  <button type="button" className="viewer-settings-button" onClick={() => setSettingsOpen(true)}>
+                    Open Viewer Settings
+                  </button>
+                </div>
+              ) : (
+                <div className="viewer-start-guide">
+                  <h1 id="viewer-start-title">Studio Desktop Multichain</h1>
+                  <p>Manage NFT collections across chains and connect OpenAI or Claude models with your own API key.</p>
+                  <figure className="viewer-start-promo">
+                    <img
+                      src="/brand/studio-desktop.webp"
+                      alt="OrdiFi Studio Desktop Multichain and UTXO Viewer software boxes"
+                      width={900}
+                      height={900}
+                    />
+                  </figure>
+                </div>
+              )}
+              <nav className="viewer-start-nav" aria-label="Update information pages">
+                {startPage === 1 ? (
+                  <button type="button" className="viewer-settings-button is-primary" onClick={() => setStartPage(2)}>
+                    Next: Studio Desktop
+                  </button>
+                ) : (
+                  <button type="button" className="viewer-settings-button" onClick={() => setStartPage(1)}>
+                    Back to Viewer API
+                  </button>
+                )}
+              </nav>
+            </section>
           ) : (
             <div className="viewer-empty">
               <div className="viewer-empty-hero">
@@ -541,7 +624,7 @@ function App() {
           )}
         </div>
 
-        {infoOpen ? (
+        {showInfo ? (
           <aside className="viewer-info-panel">
             <div className="viewer-info-scroll">
               <ContentInfoPanel
@@ -585,6 +668,15 @@ function App() {
             </header>
 
             <div className="viewer-settings-body">
+              <section className="viewer-settings-section viewer-settings-updates" aria-labelledby="viewer-updates-title">
+                <h2 id="viewer-updates-title">Updates</h2>
+                <p><strong>Installed version:</strong> {version}</p>
+                <p>For Microsoft Store installations, open <strong>Microsoft Store → Downloads</strong> and check for updates to OrdiFi UTXO Viewer.</p>
+                <a className="viewer-settings-link" href="ms-windows-store://downloadsandupdates">
+                  Open Microsoft Store updates &rarr;
+                </a>
+              </section>
+
               <section className="viewer-settings-section">
                 <h2>APIs</h2>
 
@@ -664,13 +756,7 @@ function App() {
                     <button
                       type="button"
                       className="viewer-settings-button"
-                      onClick={() => {
-                        window.open(
-                          'https://ordifi.io/resources/developers/apis',
-                          '_blank',
-                          'noopener,noreferrer',
-                        )
-                      }}
+                      onClick={openViewerApiPage}
                     >
                       Get API Token
                     </button>

@@ -830,6 +830,8 @@ input {
 .viewer-settings {
   width: min(620px, calc(100vw - 40px));
   max-height: calc(100vh - 40px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
   border: 1px solid var(--viewer-border);
   background: #0d0d0d;
@@ -867,6 +869,16 @@ input {
   color: #ffffff;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.viewer-settings-updates p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.viewer-settings-updates a {
+  justify-self: start;
 }
 
 .viewer-settings-row {
@@ -994,4 +1006,99 @@ input {
 
 .viewer-api-status.is-testing {
   color: var(--viewer-text-muted);
+}
+
+.viewer-start-card {
+  width: min(100%, 680px);
+  align-self: start;
+  margin-block: 12px;
+  overflow: hidden;
+  border: 1px solid var(--viewer-border);
+  border-radius: 12px;
+  background: var(--viewer-bg);
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.viewer-start-header,
+.viewer-start-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 12px clamp(16px, 4vw, 28px);
+  font-size: 13px;
+}
+
+.viewer-start-header {
+  border-bottom: 1px solid var(--viewer-border-soft);
+}
+
+.viewer-start-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-inline-start: auto;
+}
+
+.viewer-start-nav {
+  border-top: 1px solid var(--viewer-border-soft);
+}
+
+.viewer-start-guide {
+  padding: 18px clamp(16px, 4vw, 28px);
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.viewer-start-guide h1 {
+  margin: 0 0 8px;
+  font-size: clamp(22px, 4vw, 30px);
+  line-height: 1.2;
+}
+
+.viewer-start-guide p {
+  margin: 0;
+}
+
+.viewer-start-guide ol {
+  padding-inline-start: 1.4em;
+  margin: 14px 0;
+}
+
+.viewer-start-guide li + li {
+  margin-top: 5px;
+}
+
+.viewer-start-website {
+  display: grid;
+  gap: 3px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--viewer-border-soft);
+  border-radius: 6px;
+}
+
+.viewer-start-website a {
+  width: fit-content;
+  overflow-wrap: anywhere;
+  color: var(--viewer-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.viewer-start-website span {
+  font-size: 13px;
+}
+
+.viewer-start-promo {
+  width: min(100%, 310px);
+  margin: 14px auto 0;
+}
+
+.viewer-start-promo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
 }
